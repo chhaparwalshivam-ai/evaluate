@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Hindu College E Summit 2026 — Spin Wheel</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --red:#E01010;--red2:#9B0000;--red3:#5a0000;
+  --gold:#C9922A;--bg:#080808;--text:#F0EDE8;
+  --muted:#666;--surface:#141414;--border:rgba(255,255,255,0.07);
+}
+html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;overflow:hidden}
+
+body::after{
+  content:'';position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  background-size:200px;pointer-events:none;z-index:999;opacity:.5;
+}
+
+#glow-bg{
+  position:fixed;top:50%;left:50%;
+  transform:translate(-50%,-54%);
+  width:700px;height:700px;border-radius:50%;
+  background:radial-gradient(circle,rgba(180,0,0,0.15) 0%,transparent 70%);
+  pointer-events:none;z-index:0;
+  animation:pulse 4s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{transform:translate(-50%,-54%) scale(1);opacity:1}50%{transform:translate(-50%,-54%) scale(1.1);opacity:.6}}
+
+/* HEADER */
+#header{
+  position:fixed;top:0;left:0;right:0;z-index:50;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 40px;height:68px;
+  background:linear-gradient(to bottom,rgba(8,8,8,0.97) 0%,rgba(8,8,8,0) 100%);
+}
+.hd-brand{display:flex;align-items:center;gap:16px}
+.hd-sub{font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:600;letter-spacing:5px;color:var(--muted);text-transform:uppercase}
+.hd-name{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:3px;color:var(--red);line-height:1;text-shadow:0 0 40px rgba(224,16,16,0.5)}
+.hd-right{display:flex;align-items:center;gap:16px}
+.hd-badge{font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:rgba(200,146,42,0.9);border:1px solid rgba(200,146,42,0.3);padding:6px 14px;background:rgba(200,146,42,0.07)}
+#spin-counter{font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:2px;color:var(--muted)}
+
+/* STAGE */
+#stage{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1}
+
+#wheel-wrap{position:relative}
+#ring-outer{position:absolute;inset:-20px;border-radius:50%;background:conic-gradient(from 0deg,rgba(224,16,16,0) 0deg,rgba(224,16,16,0.55) 60deg,rgba(224,16,16,0) 120deg,rgba(155,0,0,0) 180deg,rgba(224,16,16,0.35) 240deg,rgba(224,16,16,0) 300deg,rgba(224,16,16,0) 360deg);animation:ring 6s linear infinite;z-index:0}
+@keyframes ring{to{transform:rotate(360deg)}}
+#ring-inner{position:absolute;inset:-6px;border-radius:50%;border:1.5px solid rgba(224,16,16,0.2);z-index:0}
+
+#wheel-canvas{position:relative;z-index:2;display:block;border-radius:50%;cursor:pointer;transition:filter .3s}
+#wheel-canvas:hover{filter:drop-shadow(0 0 60px rgba(224,16,16,0.4))}
+
+#pointer{position:absolute;top:-28px;left:50%;transform:translateX(-50%);z-index:10;filter:drop-shadow(0 0 12px rgba(224,16,16,0.9))}
+
+/* SPIN BUTTON */
+#spin-btn{
+  margin-top:28px;
+  font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:5px;color:#fff;
+  background:var(--red);border:none;padding:14px 68px;cursor:pointer;
+  position:relative;overflow:hidden;
+  clip-path:polygon(14px 0%,100% 0%,calc(100% - 14px) 100%,0% 100%);
+  transition:background .2s,transform .1s,box-shadow .2s;
+  box-shadow:0 0 40px rgba(224,16,16,0.35);
+}
+#spin-btn::after{content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.18),transparent);transition:left .6s}
+#spin-btn:hover{background:#F01818;box-shadow:0 0 60px rgba(224,16,16,0.55);transform:translateY(-2px)}
+#spin-btn:hover::after{left:160%}
+#spin-btn:active{transform:translateY(0)}
+#spin-btn:disabled{background:#2a0000;color:#555;cursor:not-allowed;box-shadow:none;transform:none}
+
+/* RESULT OVERLAY */
+#result-overlay{
+  position:fixed;top:50%;left:50%;
+  transform:translate(-50%,-50%) scale(0.88);
+  z-index:200;width:min(520px,92vw);
+  background:#0c0c0c;border:1px solid rgba(224,16,16,0.45);
+  opacity:0;pointer-events:none;
+  transition:opacity .4s cubic-bezier(0.22,1,0.36,1),transform .4s cubic-bezier(0.22,1,0.36,1);
+  box-shadow:0 0 100px rgba(224,16,16,0.2),0 40px 80px rgba(0,0,0,0.9);
+}
+#result-overlay.show{opacity:1;pointer-events:all;transform:translate(-50%,-50%) scale(1)}
+
+#result-top{background:linear-gradient(135deg,var(--red) 0%,var(--red2) 100%);padding:24px 28px;display:flex;align-items:flex-start;gap:16px}
+#result-num{font-family:'Bebas Neue',sans-serif;font-size:72px;line-height:1;color:rgba(255,255,255,0.15);flex-shrink:0;margin-top:-6px}
+#result-meta{flex:1}
+#result-tag{font-family:'Rajdhani',sans-serif;font-size:10px;font-weight:700;letter-spacing:4px;color:rgba(255,255,255,0.5);text-transform:uppercase;margin-bottom:4px}
+#result-title{font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:2px;color:#fff;line-height:1.1}
+#result-full{font-size:13px;font-weight:500;color:rgba(255,255,255,0.65);margin-top:4px}
+#result-body{padding:24px 28px;display:flex;flex-direction:column;gap:14px}
+#result-desc{font-size:14px;color:#bbb;line-height:1.72}
+#result-effect{font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:600;letter-spacing:.5px;color:#ff9999;padding:10px 16px;border-left:3px solid var(--red);background:rgba(224,16,16,0.08)}
+#result-close{margin:0 28px 24px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:3px;color:var(--muted);background:none;border:1px solid #2a2a2a;padding:10px 24px;cursor:pointer;width:calc(100% - 56px);transition:all .2s}
+#result-close:hover{border-color:var(--red);color:var(--red)}
+
+/* BOTTOM DRAWER */
+#drawer{
+  position:fixed;bottom:0;left:0;right:0;z-index:100;
+  background:rgba(9,9,9,0.97);border-top:1px solid rgba(224,16,16,0.18);
+  backdrop-filter:blur(24px);
+  transform:translateY(calc(100% - 48px));
+  transition:transform .5s cubic-bezier(0.22,1,0.36,1);
+}
+#drawer.open{transform:translateY(0)}
+
+#drawer-handle{height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 32px;cursor:pointer;border-bottom:1px solid transparent;transition:border-color .3s;user-select:none}
+#drawer.open #drawer-handle{border-bottom-color:rgba(224,16,16,0.12)}
+#drawer-handle:hover{background:rgba(255,255,255,0.015)}
+.dh-left{display:flex;align-items:center;gap:14px}
+.dh-label{font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:var(--muted)}
+.dh-hint{font-size:11px;color:#3a3a3a;transition:color .3s}
+#drawer-handle:hover .dh-hint{color:#555}
+#drawer-arrow{width:20px;height:20px;display:flex;align-items:center;justify-content:center;transition:transform .4s}
+#drawer.open #drawer-arrow{transform:rotate(180deg)}
+#drawer-arrow svg{width:14px;height:14px;stroke:var(--muted);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#drawer-body{max-height:52vh;overflow-y:auto;padding:20px 32px 32px;scrollbar-width:thin;scrollbar-color:var(--red2) transparent}
+#drawer-body::-webkit-scrollbar{width:3px}
+#drawer-body::-webkit-scrollbar-thumb{background:var(--red2)}
+
+#options-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px}
+
+.opt{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border:1px solid var(--border);background:var(--surface);transition:all .2s;cursor:default;position:relative;overflow:hidden}
+.opt::before{content:'';position:absolute;left:0;top:0;bottom:0;width:0;background:rgba(224,16,16,0.06);transition:width .3s}
+.opt:hover::before,.opt.lit::before{width:100%}
+.opt:hover{border-color:rgba(224,16,16,0.3)}
+.opt.lit{background:rgba(224,16,16,0.1);border-color:rgba(224,16,16,0.5);box-shadow:0 0 20px rgba(224,16,16,0.1)}
+.opt-n{font-family:'Bebas Neue',sans-serif;font-size:22px;line-height:1;color:rgba(224,16,16,0.4);flex-shrink:0;width:26px;margin-top:1px;position:relative;z-index:1;transition:color .2s}
+.opt.lit .opt-n{color:var(--red)}
+.opt-content{position:relative;z-index:1}
+.opt-short{font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;letter-spacing:.5px;color:var(--text);line-height:1.2}
+.opt-long{font-size:11px;font-weight:400;color:var(--muted);margin-top:2px;line-height:1.4}
+
+/* HISTORY */
+#history-strip{position:fixed;right:20px;top:50%;transform:translateY(-50%);z-index:20;display:flex;flex-direction:column;gap:5px;max-height:65vh;overflow-y:auto}
+#history-strip::-webkit-scrollbar{display:none}
+.hist-item{font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;color:var(--muted);background:rgba(14,14,14,0.92);border:1px solid var(--border);padding:5px 10px;max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;animation:slideR .3s ease}
+.hist-item:first-child{color:var(--text);border-color:rgba(224,16,16,0.3);background:rgba(224,16,16,0.08)}
+@keyframes slideR{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:none}}
+
+#conf{position:fixed;inset:0;pointer-events:none;z-index:998}
+</style>
+</head>
+<body>
+
+<canvas id="conf"></canvas>
+<div id="glow-bg"></div>
+
+<header id="header">
+  <div class="hd-brand">
+    <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
+      <circle cx="22" cy="22" r="22" fill="#111"/>
+      <circle cx="22" cy="20" r="11" fill="#1e1e1e" opacity=".7"/>
+      <polygon points="22,8 14,24 30,24" fill="#ddd"/>
+      <polygon points="22,8 18,17 26,17" fill="#fff"/>
+      <polygon points="28,13 21,25 35,25" fill="#999" opacity=".6"/>
+      <polyline points="5,32 12,22 20,27 28,16 39,28" stroke="#E01010" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <polygon points="39,28 33,22 37,34" fill="#E01010"/>
+    </svg>
+    <div>
+      <div class="hd-sub">Hindu College</div>
+      <div class="hd-name">E Summit <span style="font-size:20px;color:#fff;opacity:.4;letter-spacing:1px">2026</span></div>
+    </div>
+  </div>
+  <div class="hd-right">
+    <div class="hd-badge">Corpus Challenge Wheel</div>
+    <div id="spin-counter">0 SPINS</div>
+  </div>
+</header>
+
+<div id="stage">
+  <div id="wheel-wrap">
+    <div id="ring-outer"></div>
+    <div id="ring-inner"></div>
+    <svg id="pointer" width="36" height="52" viewBox="0 0 36 52">
+      <defs>
+        <linearGradient id="pg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#FF3333"/>
+          <stop offset="100%" stop-color="#8B0000"/>
+        </linearGradient>
+      </defs>
+      <polygon points="18,52 0,8 36,8" fill="url(#pg)"/>
+      <polygon points="18,48 5,14 31,14" fill="rgba(0,0,0,0.15)"/>
+      <circle cx="18" cy="8" r="7" fill="#E01010" stroke="#fff" stroke-width="2"/>
+      <circle cx="18" cy="8" r="3" fill="#fff" opacity=".55"/>
+    </svg>
+    <canvas id="wheel-canvas"></canvas>
+  </div>
+  <button id="spin-btn">⚡ SPIN THE WHEEL</button>
+</div>
+
+<!-- Result overlay -->
+<div id="result-overlay">
+  <div id="result-top">
+    <div id="result-num">01</div>
+    <div id="result-meta">
+      <div id="result-tag">Challenge Unlocked</div>
+      <div id="result-title">—</div>
+      <div id="result-full">—</div>
+    </div>
+  </div>
+  <div id="result-body">
+    <div id="result-desc">—</div>
+    <div id="result-effect">—</div>
+  </div>
+  <button id="result-close">DISMISS  ×</button>
+</div>
+
+<!-- Bottom drawer -->
+<div id="drawer">
+  <div id="drawer-handle">
+    <div class="dh-left">
+      <span class="dh-label">All 10 Challenges</span>
+      <span class="dh-hint">click to expand</span>
+    </div>
+    <div id="drawer-arrow">
+      <svg viewBox="0 0 14 14"><polyline points="2,10 7,4 12,10"/></svg>
+    </div>
+  </div>
+  <div id="drawer-body"><div id="options-grid"></div></div>
+</div>
+
+<div id="history-strip"></div>
+
+<script>
+const CHALLENGES=[
+  {short:"Newspaper Snatch",full:"Block opponent from buying a positive newspaper",desc:"Your challenging team is completely locked out from purchasing a positive newspaper this round. You've seized their advantage before they even see it coming.",effect:"Opponent cannot buy a positive newspaper this round."},
+  {short:"Corpus Drain",full:"30% of your corpus transfers to opponent",desc:"A sharp 30% slice of your current corpus is handed directly to your challenging team. Momentum can shift in seconds — play smarter from here.",effect:"You lose 30% corpus → opponent gains it."},
+  {short:"Fate Mirror",full:"Your outcome mirrors a chosen team's",desc:"Pick any team on the floor right now. Your newspaper result becomes identical to theirs — positive or negative, you share the exact same fate. Choose your mirror wisely.",effect:"Your newspaper result = the chosen team's result."},
+  {short:"Time Tax",full:"Extra time for your team costs 2×",desc:"Every additional minute your team tries to buy now comes at double the standard rate. Time is suddenly your most expensive resource — budget carefully.",effect:"1 extra minute = 2× the normal cost for your team."},
+  {short:"Corpus Swap",full:"Exchange 50% corpus with opponent",desc:"Half of your corpus goes to your challenging team, and half of theirs comes to you simultaneously. A forced wealth exchange — whether it hurts or helps depends on who holds more.",effect:"50% of your corpus ↔ 50% of opponent's corpus."},
+  {short:"High Barrier",full:"Your positive newspaper threshold rises to 1.3×",desc:"The minimum corpus you need to even qualify for a positive newspaper just went up 30%. The bar is higher — you'll need to work harder to clear it.",effect:"Min threshold to buy positive newspaper = 1.3× base."},
+  {short:"Corpus Shrink",full:"Your corpus becomes 0.7×",desc:"No conditions, no escape. Your corpus drops to 70% of its current value right now. A clean, brutal cut to your war chest.",effect:"Your corpus × 0.7 — applied immediately."},
+  {short:"Inverse Mirror",full:"You're the opposite of your opponent",desc:"You're now inverted against your challenging team. If they land a negative newspaper, your corpus multiplies by 1.3×. If they go positive, yours drops to 0.7×. High risk, high reward.",effect:"Opponent negative → your corpus ×1.3 | Opponent positive → your corpus ×0.7"},
+  {short:"Equalizer",full:"Your corpus resets to match opponent's exactly",desc:"Whatever your challenging team holds right now — that's your new corpus too. Brutally fair. Great if you're trailing, devastating if you're ahead.",effect:"Your corpus = opponent's current corpus. Right now."},
+  {short:"WIPEOUT",full:"Your entire corpus drops to zero",desc:"The nuclear option. Everything you've built is erased. Your corpus hits zero — complete obliteration. There's no softening this one.",effect:"⚠ Your corpus = 0. Total reset. Nothing remains."}
+];
+
+// Build drawer options
+const grid=document.getElementById('options-grid');
+CHALLENGES.forEach((c,i)=>{
+  const d=document.createElement('div');
+  d.className='opt';d.id=`opt${i}`;
+  d.innerHTML=`<div class="opt-n">${String(i+1).padStart(2,'0')}</div><div class="opt-content"><div class="opt-short">${c.short}</div><div class="opt-long">${c.full}</div></div>`;
+  grid.appendChild(d);
+});
+
+// Drawer
+const drawer=document.getElementById('drawer');
+document.getElementById('drawer-handle').addEventListener('click',()=>drawer.classList.toggle('open'));
+
+// Wheel
+const canvas=document.getElementById('wheel-canvas');
+const ctx=canvas.getContext('2d');
+
+function calcSize(){
+  const vw=window.innerWidth,vh=window.innerHeight;
+  const avail=Math.min(vw*0.86, vh-68-80-48-60);
+  return Math.max(260,Math.min(620,avail));
+}
+
+let S,CX,CY,R,W;
+const N=CHALLENGES.length;
+const ARC=(2*Math.PI)/N;
+let currentAngle=-Math.PI/2;
+let isSpinning=false,spinCount=0;
+
+function resize(){
+  S=calcSize();W=S;CX=S/2;CY=S/2;R=S/2-6;
+  canvas.width=S;canvas.height=S;
+  canvas.style.width=S+'px';canvas.style.height=S+'px';
+  const wrap=document.getElementById('wheel-wrap');
+  wrap.style.width=S+'px';wrap.style.height=S+'px';
+  drawWheel(currentAngle);
+}
+
+function wrapWords(text,maxW){
+  const words=text.split(' ');
+  let lines=[],line='';
+  for(const w of words){
+    const t=line?line+' '+w:w;
+    if(ctx.measureText(t).width>maxW&&line){lines.push(line);line=w}
+    else line=t;
+  }
+  if(line)lines.push(line);
+  return lines.slice(0,3);
+}
+
+function drawWheel(rot){
+  ctx.clearRect(0,0,W,W);
+
+  for(let i=0;i<N;i++){
+    const s=rot+i*ARC,e=s+ARC;
+    const even=i%2===0;
+
+    // fill
+    ctx.beginPath();ctx.moveTo(CX,CY);ctx.arc(CX,CY,R,s,e);ctx.closePath();
+    const midA=s+ARC/2;
+    const gx1=CX+Math.cos(midA)*R*0.15,gy1=CY+Math.sin(midA)*R*0.15;
+    const gx2=CX+Math.cos(midA)*R,gy2=CY+Math.sin(midA)*R;
+    const g=ctx.createLinearGradient(gx1,gy1,gx2,gy2);
+    if(even){g.addColorStop(0,'#1c0000');g.addColorStop(1,'#C01010')}
+    else{g.addColorStop(0,'#110000');g.addColorStop(1,'#8B0000')}
+    ctx.fillStyle=g;ctx.fill();
+
+    // separator lines
+    ctx.beginPath();ctx.moveTo(CX,CY);
+    ctx.lineTo(CX+R*Math.cos(s),CY+R*Math.sin(s));
+    ctx.strokeStyle='rgba(0,0,0,0.55)';ctx.lineWidth=2;ctx.stroke();
+
+    // outer rim arc
+    ctx.beginPath();ctx.arc(CX,CY,R,s+0.015,e-0.015);
+    ctx.strokeStyle=even?'rgba(255,100,100,0.2)':'rgba(200,0,0,0.15)';
+    ctx.lineWidth=4;ctx.stroke();
+
+    // text
+    ctx.save();
+    ctx.translate(CX,CY);ctx.rotate(midA);
+    ctx.textAlign='right';ctx.textBaseline='middle';
+
+    const fs=Math.max(9,Math.min(13.5,R*0.068));
+    const lh=fs*1.45;
+    ctx.font=`700 ${fs}px 'Rajdhani',sans-serif`;
+    ctx.fillStyle='rgba(255,255,255,0.93)';
+
+    const maxTW=R*0.58;
+    const lines=wrapWords(CHALLENGES[i].short,maxTW);
+    const totalH=(lines.length-1)*lh;
+    const tx=R*0.72;
+    lines.forEach((ln,li)=>{
+      ctx.fillText(ln,tx,-totalH/2+li*lh);
+    });
+
+    // small index near hub
+    ctx.font=`700 ${Math.max(8,fs-3)}px 'Bebas Neue',sans-serif`;
+    ctx.fillStyle='rgba(255,160,160,0.3)';
+    ctx.textAlign='left';
+    ctx.fillText(String(i+1).padStart(2,'0'),R*0.1,0);
+
+    ctx.restore();
+  }
+
+  // outer dot markers at segment boundaries
+  for(let i=0;i<N;i++){
+    const a=rot+i*ARC;
+    ctx.beginPath();ctx.arc(CX+(R+1)*Math.cos(a),CY+(R+1)*Math.sin(a),2.5,0,2*Math.PI);
+    ctx.fillStyle='rgba(224,16,16,0.55)';ctx.fill();
+  }
+
+  // outer ring border
+  ctx.beginPath();ctx.arc(CX,CY,R+4,0,2*Math.PI);
+  ctx.strokeStyle='rgba(224,16,16,0.3)';ctx.lineWidth=2;ctx.stroke();
+
+  // hub
+  const hs=R*0.13;
+  ctx.beginPath();ctx.arc(CX,CY,hs+4,0,2*Math.PI);
+  ctx.fillStyle='rgba(0,0,0,0.6)';ctx.fill();
+
+  const hg=ctx.createRadialGradient(CX,CY,0,CX,CY,hs);
+  hg.addColorStop(0,'#3a0000');hg.addColorStop(1,'#140000');
+  ctx.beginPath();ctx.arc(CX,CY,hs,0,2*Math.PI);
+  ctx.fillStyle=hg;ctx.fill();
+  ctx.strokeStyle='rgba(224,16,16,0.65)';ctx.lineWidth=2;ctx.stroke();
+
+  // hub chart icon
+  const ic=hs*0.55;
+  ctx.beginPath();
+  ctx.moveTo(CX-ic,CY+ic*0.4);ctx.lineTo(CX-ic*0.3,CY-ic*0.6);
+  ctx.lineTo(CX+ic*0.3,CY+ic*0.2);ctx.lineTo(CX+ic,CY-ic*0.85);
+  ctx.strokeStyle='rgba(255,255,255,0.75)';ctx.lineWidth=1.5;
+  ctx.lineJoin='round';ctx.lineCap='round';ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(CX+ic*0.6,CY-ic*1.25);ctx.lineTo(CX+ic,CY-ic*0.85);ctx.lineTo(CX+ic*1.35,CY-ic*0.42);
+  ctx.stroke();
+}
+
+resize();
+window.addEventListener('resize',resize);
+
+// Easing
+function easeOutQuint(t){return 1-Math.pow(1-t,5)}
+
+// Spin
+document.getElementById('spin-btn').addEventListener('click',spin);
+canvas.addEventListener('click',()=>{if(!isSpinning)spin()});
+
+function spin(){
+  if(isSpinning)return;
+  isSpinning=true;
+  document.getElementById('spin-btn').disabled=true;
+  document.getElementById('result-overlay').classList.remove('show');
+  document.querySelectorAll('.opt').forEach(o=>o.classList.remove('lit'));
+  drawer.classList.remove('open');
+
+  const idx=Math.floor(Math.random()*N);
+  const extraSpins=6+Math.random()*5;
+  const targetMid=-Math.PI/2-(idx*ARC+ARC/2);
+  const delta=((targetMid-currentAngle)%(2*Math.PI)+2*Math.PI)%(2*Math.PI);
+  const totalRot=extraSpins*2*Math.PI+delta;
+
+  const dur=5200+Math.random()*1400;
+  const t0=performance.now(),a0=currentAngle;
+
+  function frame(now){
+    const t=Math.min((now-t0)/dur,1);
+    currentAngle=a0+totalRot*easeOutQuint(t);
+    drawWheel(currentAngle);
+    if(t<1){requestAnimationFrame(frame)}
+    else{isSpinning=false;document.getElementById('spin-btn').disabled=false;showResult(idx)}
+  }
+  requestAnimationFrame(frame);
+}
+
+function showResult(idx){
+  spinCount++;
+  document.getElementById('spin-counter').textContent=spinCount+' SPIN'+(spinCount===1?'':'S');
+  const ch=CHALLENGES[idx];
+  document.getElementById('result-num').textContent=String(idx+1).padStart(2,'0');
+  document.getElementById('result-title').textContent=ch.short;
+  document.getElementById('result-full').textContent=ch.full;
+  document.getElementById('result-desc').textContent=ch.desc;
+  document.getElementById('result-effect').textContent=ch.effect;
+  document.getElementById('result-overlay').classList.add('show');
+  document.getElementById(`opt${idx}`).classList.add('lit');
+
+  const strip=document.getElementById('history-strip');
+  const hi=document.createElement('div');
+  hi.className='hist-item';
+  hi.textContent=`${String(idx+1).padStart(2,'0')} ${ch.short}`;
+  strip.insertBefore(hi,strip.firstChild);
+  if(strip.children.length>7)strip.removeChild(strip.lastChild);
+
+  boom(idx===9?'danger':'party');
+}
+
+document.getElementById('result-close').addEventListener('click',()=>document.getElementById('result-overlay').classList.remove('show'));
+
+// Confetti
+const cc=document.getElementById('conf'),cx2=cc.getContext('2d');
+let parts=[],confRunning=false;
+function rsz(){cc.width=window.innerWidth;cc.height=window.innerHeight}
+rsz();window.addEventListener('resize',rsz);
+
+function boom(type){
+  const pal=type==='danger'
+    ?['#E01010','#8B0000','#FF4444','#FF0000','#5a0000','#ffffff']
+    :['#E01010','#ffffff','#C9922A','#FF6666','#FFD700','#ff9999'];
+  for(let i=0;i<200;i++){
+    const ang=-Math.PI/2+(Math.random()-.5)*Math.PI*1.5;
+    const spd=5+Math.random()*16;
+    parts.push({
+      x:cc.width/2,y:cc.height*0.42,
+      vx:Math.cos(ang)*spd,vy:Math.sin(ang)*spd,
+      w:5+Math.random()*9,h:3+Math.random()*5,
+      col:pal[Math.floor(Math.random()*pal.length)],
+      rot:Math.random()*360,rv:(Math.random()-.5)*14,
+      life:1,fade:.006+Math.random()*.007
+    });
+  }
+  if(!confRunning)confLoop();
+}
+function confLoop(){
+  confRunning=true;
+  cx2.clearRect(0,0,cc.width,cc.height);
+  parts=parts.filter(p=>p.life>0);
+  for(const p of parts){
+    p.x+=p.vx;p.y+=p.vy;p.vy+=0.32;p.vx*=0.995;
+    p.rot+=p.rv;p.life-=p.fade;
+    if(p.y>cc.height+20){p.life=0;continue}
+    cx2.save();
+    cx2.globalAlpha=Math.max(0,Math.min(1,p.life*1.6));
+    cx2.translate(p.x,p.y);cx2.rotate(p.rot*Math.PI/180);
+    cx2.fillStyle=p.col;cx2.fillRect(-p.w/2,-p.h/2,p.w,p.h);
+    cx2.restore();
+  }
+  if(parts.length>0)requestAnimationFrame(confLoop);
+  else confRunning=false;
+}
+</script>
+</body>
+</html>
